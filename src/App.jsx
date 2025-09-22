@@ -127,64 +127,113 @@ function App() {
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "sans-serif", maxWidth: 800, margin: "auto" }}>
-      <h1>jscanify Document Scanner Demo</h1>
+    <div className="p-5 font-sans max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">jscanify Document Scanner Demo</h1>
 
       {/* Upload Option */}
-      <section>
-        <h2>Scan From File</h2>
-        <input type="file" accept="image/*" onChange={onFileChange} />
+      <section className="mb-10">
+        <h2 className="text-2xl font-semibold mb-4">Scan From File</h2>
+        <input 
+          type="file" 
+          accept="image/*" 
+          onChange={onFileChange}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        />
         {uploadResult && (
-          <div>
-            <h3>Highlighted</h3>
-            <div ref={el => el && uploadResult.hl && el.appendChild(uploadResult.hl)} />
+          <div className="mt-6">
+            <h3 className="text-xl font-medium mb-3">Highlighted</h3>
+            <div className="mb-6 max-w-full overflow-hidden">
+              <div ref={el => {
+                if (el && uploadResult.hl) {
+                  // Vider le conteneur avant d'ajouter le nouvel élément
+                  el.innerHTML = '';
+                  uploadResult.hl.style.maxWidth = "100%";
+                  uploadResult.hl.style.height = "auto";
+                  uploadResult.hl.style.display = "block";
+                  el.appendChild(uploadResult.hl);
+                }
+              }} />
+            </div>
 
-            <h3>Scanned</h3>
-            <div style={{ position: "relative", display: "inline-block" }}>
-              <div ref={el => el && uploadResult.scan && el.appendChild(uploadResult.scan)} />
-              <button onClick={() => saveImage(uploadResult.scan)} style={{ position: "absolute", top: 8, right: 8 }}>
+            <h3 className="text-xl font-medium mb-3">Scanned</h3>
+            <div className="relative inline-block w-full max-w-full">
+              <div className="w-full overflow-hidden" ref={el => {
+                if (el && uploadResult.scan) {
+                  // Vider le conteneur avant d'ajouter le nouvel élément
+                  el.innerHTML = '';
+                  uploadResult.scan.style.width = "100%";
+                  uploadResult.scan.style.maxWidth = "100%";
+                  uploadResult.scan.style.height = "auto";
+                  uploadResult.scan.style.display = "block";
+                  el.appendChild(uploadResult.scan);
+                }
+              }} />
+              <button 
+                onClick={() => saveImage(uploadResult.scan)} 
+                className="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+              >
                 💾 Save
               </button>
             </div>
 
-            <h4>Corner Points</h4>
-            <pre>{JSON.stringify(uploadResult.corners, null, 2)}</pre>
+            <h4 className="text-lg font-medium mt-6 mb-2">Corner Points</h4>
+            <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">{JSON.stringify(uploadResult.corners, null, 2)}</pre>
           </div>
         )}
       </section>
 
       {/* Camera Option */}
-      <section style={{ marginTop: 40 }}>
-        <h2>Live Detection</h2>
-        <button onClick={cameraActive ? stopCamera : startCamera}>
+      <section>
+        <h2 className="text-2xl font-semibold mb-4">Live Detection</h2>
+        <button 
+          onClick={cameraActive ? stopCamera : startCamera}
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-medium transition-colors mb-4"
+        >
           {cameraActive ? "Stop Camera" : "Start Camera"}
         </button>
 
         {/* Always render video and canvas to avoid ref issues */}
-        <video ref={videoRef} style={{ display: "none" }} />
-        <canvas ref={canvasRef} style={{ width: "100%", marginTop: 10, border: "1px solid #ccc" }} />
+        <video ref={videoRef} className="hidden" />
+        <canvas 
+          ref={canvasRef} 
+          className="w-full mt-3 border border-gray-300 rounded max-h-96 object-contain" 
+        />
 
         {cameraActive && (
-          <>
-            <button onClick={captureFromCamera} style={{ marginTop: 10 }}>
-              📸 Capture Scan
-            </button>
-          </>
+          <button 
+            onClick={captureFromCamera} 
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-medium transition-colors mt-3"
+          >
+            📸 Capture Scan
+          </button>
         )}
 
         {cameraScanResult && (
-          <>
-            <h3>Scanned from Camera</h3>
-            <div style={{ position: "relative", display: "inline-block" }}>
-              <div ref={el => el && cameraScanResult.scan && el.appendChild(cameraScanResult.scan)} />
-              <button onClick={() => saveImage(cameraScanResult.scan)} style={{ position: "absolute", top: 8, right: 8 }}>
+          <div className="mt-6">
+            <h3 className="text-xl font-medium mb-3">Scanned from Camera</h3>
+            <div className="relative inline-block w-full max-w-full">
+              <div className="w-full overflow-hidden" ref={el => {
+                if (el && cameraScanResult.scan) {
+                  // Vider le conteneur avant d'ajouter le nouvel élément
+                  el.innerHTML = '';
+                  cameraScanResult.scan.style.width = "100%";
+                  cameraScanResult.scan.style.maxWidth = "100%";
+                  cameraScanResult.scan.style.height = "auto";
+                  cameraScanResult.scan.style.display = "block";
+                  el.appendChild(cameraScanResult.scan);
+                }
+              }} />
+              <button 
+                onClick={() => saveImage(cameraScanResult.scan)} 
+                className="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+              >
                 💾 Save
               </button>
             </div>
 
-            <h4>Corner Points</h4>
-            <pre>{JSON.stringify(cameraScanResult.corners, null, 2)}</pre>
-          </>
+            <h4 className="text-lg font-medium mt-6 mb-2">Corner Points</h4>
+            <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">{JSON.stringify(cameraScanResult.corners, null, 2)}</pre>
+          </div>
         )}
       </section>
     </div>
