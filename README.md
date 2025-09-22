@@ -30,7 +30,7 @@ npm run build
 
 ## 🌐 Déploiement
 
-Ce projet est déployé sur Vercel : [Voir la démo](https://votre-url-vercel.app)
+Ce projet est déployé sur Vercel : [Voir la démo](https://react-jscanify-demo-dzomxtoc8-nicolas-fiascaros-projects.vercel.app)
 
 ## 📝 Fonctionnalités
 
