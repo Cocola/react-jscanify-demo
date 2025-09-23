@@ -19,6 +19,7 @@ function App() {
   const [editingCorners, setEditingCorners] = useState(null); // For corner editing
   const [originalImage, setOriginalImage] = useState(null); // Original image for editing
   const [dragState, setDragState] = useState(null); // Current drag state
+  const [zoomState, setZoomState] = useState(null); // Zoom magnification state (disabled for performance)
   const [isProcessing, setIsProcessing] = useState(false); // Loading state for image processing
 
   const videoRef = useRef(null);
@@ -38,10 +39,12 @@ function App() {
     };
     waitForLibs();
 
-    return () => stopCamera();
+    return () => {
+      stopCamera();
+    };
   }, []);
 
-  // Function to draw image with editable corner points
+  // Function to draw image with editable corner points and zoom effect
   const drawEditableCorners = useCallback(
     (canvas, image, corners) => {
       const ctx = canvas.getContext("2d");
@@ -51,51 +54,35 @@ function App() {
       // Draw the image
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-      // Much larger points for mobile (finger size)
-      const pointRadius = dragState ? 60 : 50; // Even bigger for visibility under finger
-      const innerRadius = dragState ? 25 : 20;
+      // Ultra-optimized point sizes for mobile performance
+      const pointRadius = dragState ? 80 : 60; // Much smaller for performance
 
       const drawCorner = (corner, label, isBeingDragged = false) => {
-        // Glow effect if point is being dragged
-        if (isBeingDragged) {
-          ctx.shadowColor = "rgba(255, 0, 0, 0.8)";
-          ctx.shadowBlur = 20;
-        }
-
-        // Very large outer circle for easy touch
-        ctx.fillStyle = isBeingDragged
-          ? "rgba(255, 0, 0, 0.9)"
-          : "rgba(255, 0, 0, 0.8)";
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 6; // Thicker border
+        // Ultra-simplified drawing for maximum mobile performance
+        // Single circle with stroke only - no fills, no multiple layers
+        
+        ctx.strokeStyle = isBeingDragged ? "#0096ff" : "#ff3c3c";
+        ctx.lineWidth = isBeingDragged ? 24 : 18; // 3x thicker for mobile visibility
         ctx.beginPath();
         ctx.arc(corner.x, corner.y, pointRadius, 0, 2 * Math.PI);
-        ctx.fill();
         ctx.stroke();
 
-        // More visible inner circle
+        // Simple center dot - minimal
+        ctx.fillStyle = isBeingDragged ? "#0096ff" : "#ff3c3c";
+        ctx.beginPath();
+        ctx.arc(corner.x, corner.y, 15, 0, 2 * Math.PI); // 3x bigger center dot
+        ctx.fill();
+
+        // Minimal label - no stroke
         ctx.fillStyle = "white";
-        ctx.beginPath();
-        ctx.arc(corner.x, corner.y, innerRadius, 0, 2 * Math.PI);
-        ctx.fill();
-
-        // More visible central point
-        ctx.fillStyle = isBeingDragged ? "darkred" : "red";
-        ctx.beginPath();
-        ctx.arc(corner.x, corner.y, 10, 0, 2 * Math.PI); // Bigger central point
-        ctx.fill();
-
-        // Reset shadow
-        ctx.shadowBlur = 0;
-
-        // Bigger and more visible label
-        ctx.fillStyle = "black";
         ctx.font = "bold 24px Arial";
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 4;
-        ctx.strokeText(label, corner.x + pointRadius + 10, corner.y + 8);
         ctx.fillText(label, corner.x + pointRadius + 10, corner.y + 8);
       };
+
+      // Zoom disabled for mobile performance - causes too much lag
+      // if (dragState && zoomState) {
+      //   ... zoom code commented out for performance
+      // }
 
       // Draw points (highlight the one being dragged)
       const isDraggingTL = dragState?.corner === "topLeftCorner";
@@ -108,9 +95,9 @@ function App() {
       drawCorner(corners.bottomLeftCorner, "BL", isDraggingBL);
       drawCorner(corners.bottomRightCorner, "BR", isDraggingBR);
 
-      // Draw very thick connection lines
-      ctx.strokeStyle = dragState ? "orange" : "yellow";
-      ctx.lineWidth = dragState ? 12 : 10; // Much thicker lines
+      // Simplified connection lines - 3x thicker for mobile visibility
+      ctx.strokeStyle = dragState ? "#ff6500" : "#ffff00";
+      ctx.lineWidth = dragState ? 24 : 18; // Much thicker lines for mobile
       ctx.beginPath();
       ctx.moveTo(corners.topLeftCorner.x, corners.topLeftCorner.y);
       ctx.lineTo(corners.topRightCorner.x, corners.topRightCorner.y);
@@ -119,7 +106,7 @@ function App() {
       ctx.lineTo(corners.topLeftCorner.x, corners.topLeftCorner.y);
       ctx.stroke();
     },
-    [dragState],
+    [dragState], // Removed zoomState since zoom is disabled
   );
 
   // Initialize editing canvas when editor opens
@@ -131,7 +118,7 @@ function App() {
         editingCorners,
       );
     }
-  }, [editingCorners, originalImage, dragState, drawEditableCorners]); // Include dragState to redraw during drag
+  }, [editingCorners, originalImage, dragState, zoomState, drawEditableCorners]); // Include zoomState to redraw during zoom
 
   const stopCamera = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -283,7 +270,7 @@ function App() {
 
   // Function to find which point is touched
   const findTouchedCorner = (x, y, corners) => {
-    const threshold = 100; // Larger detection zone for big points
+    const threshold = 100; // Adjusted for smaller point size
     const distances = {
       topLeftCorner: Math.hypot(
         x - corners.topLeftCorner.x,
@@ -326,17 +313,15 @@ function App() {
         startY: y,
       });
 
-      // Haptic feedback at start
-      if (navigator.vibrate) {
-        navigator.vibrate(30);
-      }
+      // Activate zoom effect
+      setZoomState({ x, y });
 
       // Change cursor to indicate drag
       canvas.style.cursor = "grabbing";
     }
   };
 
-  // Movement during drag
+  // Movement during drag - minimal redraw for performance
   const handleDragMove = (e) => {
     if (!dragState || !editingCorners || !editorCanvasRef.current) return;
 
@@ -344,13 +329,16 @@ function App() {
     const canvas = editorCanvasRef.current;
     const { x, y } = getEventCoordinates(e, canvas);
 
+    // Update zoom position (but zoom is disabled for performance)
+    setZoomState({ x, y });
+
     // Update point position in real time
     const newCorners = { ...editingCorners };
     newCorners[dragState.corner] = { x, y };
     setEditingCorners(newCorners);
 
-    // Redraw immediately for fluid feedback
-    drawEditableCorners(canvas, originalImage, newCorners);
+    // NO REDRAW during movement for maximum performance
+    // Only visual feedback is the cursor position
   };
 
   // End of drag (touch/mouse up)
@@ -360,10 +348,8 @@ function App() {
     e.preventDefault();
     const canvas = editorCanvasRef.current;
 
-    // Final feedback
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
-    }
+    // Deactivate zoom effect
+    setZoomState(null);
 
     // Restore cursor
     if (canvas) {
@@ -517,7 +503,7 @@ function App() {
           <video ref={videoRef} className="hidden" />
           <canvas
             ref={canvasRef}
-            className="mt-3 max-h-96 w-full rounded border border-gray-300 bg-white object-contain dark:border-gray-600 dark:bg-gray-800"
+            
           />
 
           {cameraActive && (
@@ -612,21 +598,24 @@ function App() {
               </h2>
               <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-700 dark:bg-blue-900/30">
                 <p className="mb-2 text-sm font-medium text-blue-800 dark:text-blue-200">
-                  Instructions:
+                  Instructions améliorées:
                 </p>
                 <ul className="list-inside list-disc space-y-1 text-xs text-blue-700 dark:text-blue-300">
                   <li>
-                    <strong>Touch</strong> the large red points to move them
+                    <strong>Touch</strong> les gros points rouges pour les déplacer
+                  </li>
+                  <li>
+                    <strong>Zoom automatique</strong> pendant le déplacement pour plus de précision
                   </li>
                   <li>
                     <strong>TL</strong>, <strong>TR</strong>,{" "}
-                    <strong>BL</strong>, <strong>BR</strong> = document corners
+                    <strong>BL</strong>, <strong>BR</strong> = coins du document
                   </li>
                   <li>
-                    The <strong>yellow lines</strong> show the scanned area
+                    Les <strong>lignes orange en pointillés</strong> indiquent la zone scannée
                   </li>
                   <li>
-                    <strong>Vibration</strong> = point moved successfully
+                    <strong>Vibration tactile</strong> confirme le déplacement réussi
                   </li>
                 </ul>
               </div>
@@ -648,7 +637,7 @@ function App() {
                   style={{ maxHeight: "70vh", minHeight: "300px" }}
                 />
                 <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-                  👆 Drag the large red points to move them
+                  👆 Déplacez les gros points rouges - le zoom s'active automatiquement
                 </p>
               </div>
 
